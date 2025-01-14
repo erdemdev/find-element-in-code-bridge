@@ -5,6 +5,14 @@ const EXTENSION_NAME = "Find Element in Code";
 let server: any;
 const PORT = 12800;
 let statusBarItem: vscode.StatusBarItem;
+let globalContext: vscode.ExtensionContext;
+
+const SERVER_STATE_KEY = 'serverState';
+
+interface ServerState {
+  isRunning: boolean;
+  lastStatus: 'running' | 'stopped' | 'error';
+}
 
 function createStatusBarItem() {
   statusBarItem = vscode.window.createStatusBarItem(
@@ -137,65 +145,100 @@ function createServer() {
   return app;
 }
 
-function startServer(): Promise<void> {
-  return new Promise((resolve, reject) => {
-    // Check if workspace is open
-    if (!vscode.workspace.workspaceFolders) {
-      const msg = `[${EXTENSION_NAME}] No workspace is open. The extension will be disabled until you open a workspace.`;
-      vscode.window.showWarningMessage(msg);
+async function isPortAvailable(port: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    const tempServer = require('net').createServer()
+      .once('error', () => {
+        resolve(false);
+      })
+      .once('listening', () => {
+        tempServer.once('close', () => {
+          resolve(true);
+        }).close();
+      })
+      .listen(port);
+  });
+}
+
+async function startServer(): Promise<void> {
+  try {
+    // Check if port is available before attempting to start
+    const portAvailable = await isPortAvailable(PORT);
+    if (!portAvailable) {
+      console.error(`[${EXTENSION_NAME}] Port ${PORT} is not available`);
       updateStatusBar("error");
-      reject(new Error(msg));
+      const serverState: ServerState = { isRunning: false, lastStatus: 'error' };
+      globalContext.workspaceState.update(SERVER_STATE_KEY, serverState);
       return;
     }
 
     const app = createServer();
+    server = app.listen(PORT);
+    
+    server.on('error', (error: any) => {
+      console.error(`[${EXTENSION_NAME}] Server error:`, error);
+      updateStatusBar("error");
+      const serverState: ServerState = { isRunning: false, lastStatus: 'error' };
+      globalContext.workspaceState.update(SERVER_STATE_KEY, serverState);
+    });
 
-    server = app
-      .listen(PORT, () => {
-        console.log(
-          `[${EXTENSION_NAME}] Server started on port ${PORT}`,
-        );
-        updateStatusBar("running");
-        resolve();
-      })
-      .on("error", (error: NodeJS.ErrnoException) => {
-        if (error.code === "EADDRINUSE") {
-          const msg = `[${EXTENSION_NAME}] Port ${PORT} is already in use. Please make sure no other instance of the extension is running.`;
-          vscode.window.showErrorMessage(msg);
-          updateStatusBar("error");
-          server = null;
-          reject(new Error(msg));
-        } else {
-          const msg = `[${EXTENSION_NAME}] Failed to start server: ${error.message}`;
-          vscode.window.showErrorMessage(msg);
-          updateStatusBar("error");
-          server = null;
-          reject(new Error(msg));
-        }
-      });
-  });
+    server.on('listening', () => {
+      console.log(`[${EXTENSION_NAME}] Server is running on port ${PORT}`);
+      updateStatusBar("running");
+      const serverState: ServerState = { isRunning: true, lastStatus: 'running' };
+      globalContext.workspaceState.update(SERVER_STATE_KEY, serverState);
+    });
+  } catch (error) {
+    console.error(`[${EXTENSION_NAME}] Failed to create server:`, error);
+    updateStatusBar("error");
+    const serverState: ServerState = { isRunning: false, lastStatus: 'error' };
+    globalContext.workspaceState.update(SERVER_STATE_KEY, serverState);
+  }
 }
 
-function stopServer(): Promise<void> {
+async function stopServer(): Promise<void> {
   return new Promise((resolve) => {
     if (server) {
       server.close(() => {
-        server = null;
+        console.log(`[${EXTENSION_NAME}] Server stopped`);
         updateStatusBar("stopped");
+        // Save server state
+        const serverState: ServerState = { isRunning: false, lastStatus: 'stopped' };
+        globalContext.workspaceState.update(SERVER_STATE_KEY, serverState);
+        server = null; // Clear the server variable after stopping
         resolve();
       });
     } else {
-      updateStatusBar("stopped");
       resolve();
     }
   });
 }
 
 export function activate(context: vscode.ExtensionContext) {
+  globalContext = context;
+  
   // Create status bar item
   statusBarItem = createStatusBarItem();
   updateStatusBar("stopped"); // Set initial state as stopped
   context.subscriptions.push(statusBarItem);
+
+  // Restore server state with port check
+  const serverState = context.workspaceState.get<ServerState>(SERVER_STATE_KEY);
+  if (serverState?.isRunning) {
+    // Check if port is actually available before attempting to restore
+    isPortAvailable(PORT).then(available => {
+      if (available) {
+        startServer();
+      } else {
+        // Update state to error if port is not available
+        updateStatusBar("error");
+        const serverState: ServerState = { isRunning: false, lastStatus: 'error' };
+        globalContext.workspaceState.update(SERVER_STATE_KEY, serverState);
+      }
+    });
+  } else {
+    updateStatusBar("stopped");
+  }
 
   // Register commands
   context.subscriptions.push(
