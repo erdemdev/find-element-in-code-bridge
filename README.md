@@ -10,6 +10,7 @@ This VS Code extension provides a bridge between your browser and VS Code, allow
 - Provides visual feedback through VS Code notifications
 - Supports multiple file types (`.tsx`, `.jsx`, `.html`)
 - Status bar indicator shows server status and provides quick actions
+- Seamless integration with the browser extension
 
 ### Status Bar Indicator
 
@@ -37,21 +38,32 @@ Click the status bar item to:
 1. Install the extension through VS Code's Extensions marketplace
 2. Open a workspace containing your web application files
 3. The extension will automatically activate and start a local server on port 12800
-4. Install the corresponding browser extension (sold separately) to connect to this bridge
+4. Install the corresponding browser extension from Chrome Web Store to connect to this bridge
+
+## Browser Extension Integration
+
+The VS Code extension works in tandem with a dedicated browser extension:
+
+- Chrome Web Store: [Find Element In Code](https://chrome.google.com/webstore/category/extensions) ⏳
+- Allows element selection directly from your web application
+- Sends element information securely to the VS Code extension
+- Provides visual feedback when elements are found
 
 ## Usage
 
-1. The extension automatically starts when you launch VS Code
-2. Navigate to your web application in the browser
-3. Use the browser extension to select an element
-4. The VS Code extension will automatically find and open the source file containing that element
+1. First time setup: Run the command `Find Element In Code: Start Server` from Command Palette (Ctrl+Shift+P) or click the status bar item
+2. After initial setup, the extension will automatically start the server when you open this workspace
+3. Navigate to your web application in the browser
+4. Use the browser extension to select an element
+5. The VS Code extension will automatically find and open the source file containing that element
 
 ### Server Management
 
 The extension provides commands to manage the connection to the browser:
 
-- `Find Element In Code: Reconnect Server`: Restarts the server if you encounter connection issues
-- `Find Element In Code: Disconnect Server`: Stops the server if you need to free up port 12800
+- `Find Element In Code: Toggle Server`: Starts or stops the server
+- `Find Element In Code: Start Server`: Starts the local server
+- `Find Element In Code: Stop Server`: Stops the server
 
 You can access these commands through the Command Palette (Ctrl+Shift+P).
 
@@ -59,10 +71,11 @@ You can access these commands through the Command Palette (Ctrl+Shift+P).
 
 Currently, this extension doesn't add any configurable settings to VS Code.
 
-## Known Issues
+## Limitations
 
-- Currently only searches in `.tsx` files
 - Server runs on a fixed port (12800)
+- Currently limited to a single workspace.
+- Element search might take longer in large codebases
 
 ## Release Notes
 
