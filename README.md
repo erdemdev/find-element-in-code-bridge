@@ -16,9 +16,9 @@ This VS Code extension provides a bridge between your browser and VS Code, allow
 
 The extension adds a status bar item that shows the current server status:
 
-- 📡 Running: Server is active and listening for requests
-- ⭕ Stopped: Server is currently stopped
-- ⚠️ Error: Server encountered an issue
+- Running: Server is active and listening for requests
+- Stopped: Server is currently stopped
+- Error: Server encountered an issue
 
 Click the status bar item to:
 
@@ -101,4 +101,4 @@ Copyright (c) 2025 erdemdev
 
 ---
 
-**Enjoy coding with Find Element In Code Bridge!**
+**Enjoy coding with Find Element In Code!**
