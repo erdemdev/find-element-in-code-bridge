@@ -30,8 +30,6 @@ Click the status bar item to:
 
 - Visual Studio Code version 1.94.0 or higher
 - Node.js and npm installed on your system
-- A workspace containing TypeScript/React or HTML files
-- The extension only activates when a workspace with `.tsx`, `.jsx`, or `.html` files is open
 
 ## Installation
 
