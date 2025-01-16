@@ -86,10 +86,15 @@ function createServer() {
     }
   });
 
-  app.use(express.text({ type: "*/*" }));
+  app.use(express.json());
 
   app.post("/", async (req: Request, res: Response) => {
-    const body = req.body;
+    const { regex, fileTypes } = req.body;
+
+    if (!regex || !Array.isArray(fileTypes)) {
+      res.status(400).json({ error: "Invalid request body. Expected 'regex' and 'fileTypes' array fields." });
+      return;
+    }
 
     // Get all files in the workspace
     const workspaceFolders = vscode.workspace.workspaceFolders;
@@ -102,7 +107,7 @@ function createServer() {
 
     // Get all the related files.
     const files = await vscode.workspace.findFiles(
-      "**/*.{tsx,jsx,html}",
+      `**/*.{${fileTypes.join(',')}}`,
       "**/node_modules/**",
     );
 
@@ -110,7 +115,7 @@ function createServer() {
     let lineNumber: number = 0;
     let columnNumber: number = 0;
 
-    const regex = new RegExp(body);
+    const regexPattern = new RegExp(regex);
 
     // Search for content in each file
     for (const file of files) {
@@ -118,7 +123,7 @@ function createServer() {
       const lines = content.split("\n");
 
       for (let i = 0; i < lines.length; i++) {
-        const match = regex.exec(lines[i]);
+        const match = regexPattern.exec(lines[i]);
         if (match) {
           foundFile = file;
           lineNumber = i + 1; // Convert to 1-based line number
