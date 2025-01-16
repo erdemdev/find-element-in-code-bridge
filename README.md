@@ -75,18 +75,6 @@ Currently, this extension doesn't add any configurable settings to VS Code.
 - Currently limited to a single workspace.
 - Element search might take longer in large codebases
 
-## Release Notes
-
-### 0.0.1
-
-Initial release of Find Element In Code Bridge:
-
-- Basic functionality to find elements in source code
-- Express server implementation
-- File search and open capabilities
-
----
-
 ## Contributing
 
 The source code for this extension is available on [GitHub](https://github.com/erdemdev/find-element-in-code-bridge). Feel free to contribute by submitting issues or pull requests.
